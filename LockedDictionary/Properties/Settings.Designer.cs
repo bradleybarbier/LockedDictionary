@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace LockedDictionary.Properties
+namespace UI.Properties
 {
 
 

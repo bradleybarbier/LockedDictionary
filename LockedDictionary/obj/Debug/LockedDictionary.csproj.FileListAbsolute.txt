@@ -1,1 +1,9 @@
-C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\bin\Debug\LockedDictionary.exe.config
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\bin\Debug\UI.exe.config
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\bin\Debug\UI.exe
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\bin\Debug\UI.pdb
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\obj\Debug\LockedDictionary.csprojResolveAssemblyReference.cache
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\obj\Debug\UI.Form1.resources
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\obj\Debug\UI.Properties.Resources.resources
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\obj\Debug\LockedDictionary.csproj.GenerateResource.Cache
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\obj\Debug\UI.exe
+C:\Development\Repos\Github\BradleyBarbier\LockedDictionary\LockedDictionary\obj\Debug\UI.pdb
