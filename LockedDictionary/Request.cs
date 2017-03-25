@@ -5,8 +5,9 @@ namespace UI
     public class Request
     {
         public int RequestId { get; set; }
-        public int CallId { get; set; }
+        public int? CallId { get; set; }
         public int? Requester { get; set; }
+        public Operation Operation { get; set; }
 
         private DateTime _Start;
         public DateTime Start
