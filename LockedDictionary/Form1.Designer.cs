@@ -33,6 +33,10 @@
             this.Stattus = new System.Windows.Forms.ToolStripStatusLabel();
             this.Status = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.lblDeleteCall = new System.Windows.Forms.Label();
+            this.lblAddCall = new System.Windows.Forms.Label();
+            this.lblRequest = new System.Windows.Forms.Label();
+            this.lblProcessIndicator = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
             this.btnStopProcessing = new System.Windows.Forms.Button();
             this.btnStartProcessing = new System.Windows.Forms.Button();
@@ -50,10 +54,6 @@
             this.txtCalls = new System.Windows.Forms.TextBox();
             this.dgRequests = new System.Windows.Forms.DataGridView();
             this.dgState = new System.Windows.Forms.DataGridView();
-            this.lblProcessIndicator = new System.Windows.Forms.Label();
-            this.lblRequest = new System.Windows.Forms.Label();
-            this.lblAddCall = new System.Windows.Forms.Label();
-            this.lblDeleteCall = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.StatusStrip.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -107,6 +107,55 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(86, 706);
             this.panel2.TabIndex = 1;
+            // 
+            // lblDeleteCall
+            // 
+            this.lblDeleteCall.AutoSize = true;
+            this.lblDeleteCall.Enabled = false;
+            this.lblDeleteCall.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDeleteCall.ForeColor = System.Drawing.Color.Red;
+            this.lblDeleteCall.Location = new System.Drawing.Point(25, 318);
+            this.lblDeleteCall.Name = "lblDeleteCall";
+            this.lblDeleteCall.Size = new System.Drawing.Size(35, 31);
+            this.lblDeleteCall.TabIndex = 7;
+            this.lblDeleteCall.Text = "D";
+            // 
+            // lblAddCall
+            // 
+            this.lblAddCall.AutoSize = true;
+            this.lblAddCall.Enabled = false;
+            this.lblAddCall.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblAddCall.ForeColor = System.Drawing.Color.Blue;
+            this.lblAddCall.Location = new System.Drawing.Point(25, 276);
+            this.lblAddCall.Name = "lblAddCall";
+            this.lblAddCall.Size = new System.Drawing.Size(33, 31);
+            this.lblAddCall.TabIndex = 6;
+            this.lblAddCall.Text = "A";
+            this.lblAddCall.Click += new System.EventHandler(this.label7_Click);
+            // 
+            // lblRequest
+            // 
+            this.lblRequest.AutoSize = true;
+            this.lblRequest.Enabled = false;
+            this.lblRequest.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblRequest.ForeColor = System.Drawing.Color.Yellow;
+            this.lblRequest.Location = new System.Drawing.Point(25, 234);
+            this.lblRequest.Name = "lblRequest";
+            this.lblRequest.Size = new System.Drawing.Size(35, 31);
+            this.lblRequest.TabIndex = 5;
+            this.lblRequest.Text = "R";
+            // 
+            // lblProcessIndicator
+            // 
+            this.lblProcessIndicator.AutoSize = true;
+            this.lblProcessIndicator.Enabled = false;
+            this.lblProcessIndicator.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblProcessIndicator.ForeColor = System.Drawing.Color.Green;
+            this.lblProcessIndicator.Location = new System.Drawing.Point(25, 190);
+            this.lblProcessIndicator.Name = "lblProcessIndicator";
+            this.lblProcessIndicator.Size = new System.Drawing.Size(33, 31);
+            this.lblProcessIndicator.TabIndex = 4;
+            this.lblProcessIndicator.Text = "P";
             // 
             // btnClose
             // 
@@ -240,7 +289,6 @@
             this.lblTotalRequests.Size = new System.Drawing.Size(31, 13);
             this.lblTotalRequests.TabIndex = 5;
             this.lblTotalRequests.Text = "Total";
-            this.lblTotalRequests.Visible = false;
             this.lblTotalRequests.Click += new System.EventHandler(this.lblTotalRequests_Click);
             // 
             // lblTotalCalls
@@ -251,7 +299,6 @@
             this.lblTotalCalls.Size = new System.Drawing.Size(31, 13);
             this.lblTotalCalls.TabIndex = 4;
             this.lblTotalCalls.Text = "Total";
-            this.lblTotalCalls.Visible = false;
             // 
             // txtCalls
             // 
@@ -278,55 +325,6 @@
             this.dgState.Name = "dgState";
             this.dgState.Size = new System.Drawing.Size(762, 264);
             this.dgState.TabIndex = 1;
-            // 
-            // lblProcessIndicator
-            // 
-            this.lblProcessIndicator.AutoSize = true;
-            this.lblProcessIndicator.Enabled = false;
-            this.lblProcessIndicator.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblProcessIndicator.ForeColor = System.Drawing.Color.Green;
-            this.lblProcessIndicator.Location = new System.Drawing.Point(25, 190);
-            this.lblProcessIndicator.Name = "lblProcessIndicator";
-            this.lblProcessIndicator.Size = new System.Drawing.Size(33, 31);
-            this.lblProcessIndicator.TabIndex = 4;
-            this.lblProcessIndicator.Text = "P";
-            // 
-            // lblRequest
-            // 
-            this.lblRequest.AutoSize = true;
-            this.lblRequest.Enabled = false;
-            this.lblRequest.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblRequest.ForeColor = System.Drawing.Color.Yellow;
-            this.lblRequest.Location = new System.Drawing.Point(25, 234);
-            this.lblRequest.Name = "lblRequest";
-            this.lblRequest.Size = new System.Drawing.Size(35, 31);
-            this.lblRequest.TabIndex = 5;
-            this.lblRequest.Text = "R";
-            // 
-            // lblAddCall
-            // 
-            this.lblAddCall.AutoSize = true;
-            this.lblAddCall.Enabled = false;
-            this.lblAddCall.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblAddCall.ForeColor = System.Drawing.Color.Blue;
-            this.lblAddCall.Location = new System.Drawing.Point(25, 276);
-            this.lblAddCall.Name = "lblAddCall";
-            this.lblAddCall.Size = new System.Drawing.Size(33, 31);
-            this.lblAddCall.TabIndex = 6;
-            this.lblAddCall.Text = "A";
-            this.lblAddCall.Click += new System.EventHandler(this.label7_Click);
-            // 
-            // lblDeleteCall
-            // 
-            this.lblDeleteCall.AutoSize = true;
-            this.lblDeleteCall.Enabled = false;
-            this.lblDeleteCall.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDeleteCall.ForeColor = System.Drawing.Color.Red;
-            this.lblDeleteCall.Location = new System.Drawing.Point(25, 318);
-            this.lblDeleteCall.Name = "lblDeleteCall";
-            this.lblDeleteCall.Size = new System.Drawing.Size(35, 31);
-            this.lblDeleteCall.TabIndex = 7;
-            this.lblDeleteCall.Text = "D";
             // 
             // Form1
             // 

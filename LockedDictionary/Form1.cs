@@ -19,149 +19,178 @@ namespace UI
         private bool _stopRequested;
         private int _callCounter;
         private int _requestCounter;
-        private const int AddCallInterval = 5000;
-        private const int RemoveCallInterval = 10000;
-        private const int AddRequestInterval = 1000;
-        private const int ProcessRequestInterval = 500;
-        private int _totalCallsAdded = 0;
-        private int _totalCallsDeleted = 0;
+        private const int AddCallInterval = 1000;
+        private const int DeleteCallInterval = 2000;
+        private const int AddRequestInterval = 500;
+        private const int ProcessRequestInterval = 250;
+        private const int UiUPdateInterval = 1;
 
+        //private int _totalCallsAdded = 0;
+        private int _totalCallsDeleted = 0;
 
         public readonly Dictionary<int, Call> State = new Dictionary<int, Call>();
         public readonly Queue<Request> Requests = new Queue<Request>();
         private readonly Random _randomGenerator = new Random();
 
+        private List<string> queuedTimerMessages = new List<string>();
+        private List<string> queuedCallMessages = new List<string>();
+        private List<string> queuedRequestMessages = new List<string>();
+
         #region Timers
         //Timer to add calls to state
         private Timer _timerAddCallToState;
 
-        //Timer to remove calls from state
-        private Timer _timerRemoveCallFromState;
+        //Timer to delete calls from state
+        private Timer _timerDeleteCallFromState;
 
         //Timer to add requests
         private Timer _timerAddRequest;
 
         //Timer to process requests
         private Timer _timerProcessRequest;
+
+        //Timer to update UI
+        private Timer _timerUiUpdate;
         #endregion
 
         private void SetupTimers()
         {
-            _timerAddCallToState = new Timer {Interval = AddCallInterval }; // add new call every 30 seconds
+            _timerAddCallToState = new Timer {Interval = AddCallInterval }; // add new call
             _timerAddCallToState.Tick += HandleTimerAddCall;
 
-            _timerRemoveCallFromState = new Timer {Interval = RemoveCallInterval }; // delete a call 60 seconds
-            _timerRemoveCallFromState.Tick += HandleTimerRemoveCall;
+            _timerDeleteCallFromState = new Timer {Interval = DeleteCallInterval }; // delete a call
+            _timerDeleteCallFromState.Tick += HandleTimerDeleteCall;
 
-            _timerAddRequest = new Timer {Interval = AddRequestInterval }; //add new request every 500 milliseconds
+            _timerAddRequest = new Timer {Interval = AddRequestInterval }; //add new request
             _timerAddRequest.Tick += HandleTimerAddRequest;
 
-            _timerProcessRequest = new Timer {Interval = ProcessRequestInterval };  //process a request every 1 second
+            _timerProcessRequest = new Timer {Interval = ProcessRequestInterval };  //process a request
             _timerProcessRequest.Tick += HandleTimerProcessRequest;
+
+            _timerUiUpdate = new Timer { Interval = UiUPdateInterval };  //update UI
+            _timerUiUpdate.Tick += HandleTimerUiUpdate;
         }
 
         #region Timer Handlers
         private async void HandleTimerAddCall(object sender, EventArgs e)
+        //private void HandleTimerAddCall(object sender, EventArgs e)
         {
             try
             {
-                LogTimerMessage("Add");
-                UpdateIndicator(lblAddCall, true);
+                queuedTimerMessages.Add("Add");
                 await Task.Run(() =>
                 {
-                    //AddNewCall(Task.CurrentId);
                     AddRequest(Task.CurrentId, null, Operation.AddCall);
                 });
-                UpdateIndicator(lblAddCall, false);
+                //AddRequest(Task.CurrentId, null, Operation.AddCall);
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
-        private async void HandleTimerRemoveCall(object sender, EventArgs e)
+        private async void HandleTimerDeleteCall(object sender, EventArgs e)
+        //private void HandleTimerDeleteCall(object sender, EventArgs e)
         {
             try
             {
-                LogTimerMessage("Remove");
-                UpdateIndicator(lblDeleteCall, true);
+                queuedTimerMessages.Add("Delete");
                 await Task.Run(() =>
                 {
-                    RemoveCall(Task.CurrentId);
+                    AddRequest(Task.CurrentId, null, Operation.DeleteCall);
                 });
-                UpdateIndicator(lblDeleteCall, false);
+                //AddRequest(Task.CurrentId, null, Operation.DeleteCall);
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
         private async void HandleTimerProcessRequest(object sender, EventArgs e)
+        //private void HandleTimerProcessRequest(object sender, EventArgs e)
         {
             try
             {
-                LogTimerMessage("Process");
-                UpdateIndicator(lblProcessIndicator, true);
+                queuedTimerMessages.Add("Process");
                 await Task.Run(() =>
                 {
                     ProcessNextRequest();
                 });
 
-                UpdateIndicator(lblProcessIndicator, false);
-
-                //lock (Requests)
-                //{
-                //    if (Requests.Any() == false && _stopRequested)
-                //    {
-                //        btnClose.Invoke(new Action(() => { btnClose.Enabled = true; }));
-                //        _timerProcessRequest.Stop();
-                //    }
-                //    else
-                //        btnClose.Invoke(new Action(() => { btnClose.Enabled = false; }));
-                //}
+                //ProcessNextRequest();
+                DoUiUpdate();
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
         private async void HandleTimerAddRequest(object sender, EventArgs e)
+        //private void HandleTimerAddRequest(object sender, EventArgs e)
         {
             try
             {
-                LogTimerMessage("Request");
-                UpdateIndicator(lblRequest, true);
-                if (State != null && State.Any())
+                var randomCallId = GetRandomCall();
+                if (randomCallId != -1)
                 {
-                    _requestCounter++;
-                    //var requestId = randomGenerator.Next();
-                    var requestId = _requestCounter;
-                    var callIndex = State.Count == 1 ? 0 : _randomGenerator.Next(1, State.Count - 1);
-                    //find a random call from 1 - seedCallCount
-                    var callObject = State.Values.ElementAt(callIndex);
-                    if (callObject != null)
+                    queuedTimerMessages.Add("Request");
+
+                    await Task.Run(() =>
                     {
-                        await Task.Run(() =>
-                        {
-                            AddRequest(Task.CurrentId, callObject.Id, Operation.UpdateState);
-                        });
-                    }
+                        AddRequest(Task.CurrentId, randomCallId, Operation.UpdateState);
+                    });
+
+                    //AddRequest(Task.CurrentId, randomCallId, Operation.UpdateState);
                 }
-                UpdateIndicator(lblRequest, false);
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
+            }
+        }
+
+        private void HandleTimerUiUpdate(object sender, EventArgs e)
+        {
+            try
+            {
+                //DoUiUpdate();
+            }
+
+            catch (Exception ex)
+            {
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
         #endregion
+
+        private void DoUiUpdate()
+        {
+            try
+            {
+                this.Invoke(new Action(() =>
+                {
+                    //UpdateIndicator(lblRequest, false);
+                    UpdateLabels();
+                    BindStateDataToGrid();
+                    BindRequestDataToGrid();
+                    LogTimerMessages();
+                    LogCallMessages();
+                    LogRequestMessages();
+                }));
+            }    
+
+            catch (Exception ex)
+            {
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
+            }
+        }
 
         private void CleanupQueueAndProcesses()
         {
@@ -182,7 +211,7 @@ namespace UI
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -191,14 +220,15 @@ namespace UI
             try
             { 
                 _timerAddCallToState.Start();
-                _timerRemoveCallFromState.Start();
+                _timerDeleteCallFromState.Start();
                 _timerAddRequest.Start();
                 _timerProcessRequest.Start();
+                _timerUiUpdate.Start();
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
 
         }
@@ -208,22 +238,18 @@ namespace UI
             try
             {
                 _timerAddCallToState.Stop();
-                _timerRemoveCallFromState.Stop();
+                _timerDeleteCallFromState.Stop();
                 _timerAddRequest.Stop();
                 _timerProcessRequest.Stop();
+                _timerUiUpdate.Stop();
 
                 CleanupQueueAndProcesses();
-
-                //lock (Requests)
-                //{
-                //    if (!Requests.Any())
-                //        _timerProcessRequest.Stop();
-                //}
+                DoUiUpdate();
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -231,62 +257,87 @@ namespace UI
         {
             try
             {
-                _totalCallsAdded++;
-                //var requestId = randomGenerator.Next();
-                var requestId = _requestCounter;
-                //var callId = callToDelete;
-                //AddRequest(requesterId, null, Operation.AddCall);
-
-
                 _callCounter++;
-                LogCallMessage($"Adding a new call, requester: {requesterId}, total: {_callCounter}");
-                State.Add(_callCounter, new Call()
-                {
-                    Id = _callCounter,
-                    State = UI.State.None,
-                    Description = $"New Item Added: {_callCounter}"
-                });
 
-                //AddRequest(requesterId, null, Operation.AddCall);
+                queuedCallMessages.Add($"Adding a new call, requester: {requesterId}, total: {_callCounter}");
+                //lock (State)
+                {
+                    State.Add(_callCounter, new Call()
+                    {
+                        Id = _callCounter,
+                        State = UI.State.None,
+                        Description = $"New Call Added, Call Id: {_callCounter}"
+                    });
+                }
             }
 
             catch (Exception ex)
             {
-                LogCallMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedCallMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
-        private void RemoveCall(int? requesterId)
+        private int GetRandomCall()
         {
             try
             {
-                //delete random call
-                if (_callCounter > 0 && State.Any())
+                var callId = -1;
+                //lock (State)
+                {
+                    if (_callCounter > 0 && State.Any())
+                    {
+                        var callIndex = State.Count == 1 ? 0 : _randomGenerator.Next(1, State.Count - 1);
+                        //find a random call from 1 - seedCallCount
+                        var callObject = State.Values.ElementAt(callIndex);
+                        if (callObject != null)
+                        {
+                            //var callToDelete = _randomGenerator.Next(1, _callCounter);
+
+                            //add an delete request
+                            //_requestCounter++;
+                            //var requestId = _requestCounter;
+                            callId = callObject.Id;
+
+                            return callId;
+                        }
+                    }
+                }
+
+                return callId;
+            }
+
+            catch(Exception ex)
+            {
+                queuedCallMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
+                return -1;
+            }
+        }
+
+        private void DeleteCall(int? requesterId)
+        {
+            try
+            {
+                var callToDelete = GetRandomCall();
+                if (callToDelete != -1)
                 {
                     _totalCallsDeleted++;
+                    queuedCallMessages.Add($"Deleting a call, requester: {requesterId}, total: {_callCounter}");
 
-
-
-                    var callIndex = State.Count == 1 ? 0 : _randomGenerator.Next(1, State.Count - 1);
-                    //find a random call from 1 - seedCallCount
-                    var callObject = State.Values.ElementAt(callIndex);
-                    if (callObject != null)
+                    //lock (State)
                     {
-                        var callToDelete = _randomGenerator.Next(1, _callCounter);
-                        LogCallMessage($"Deleting call: {callObject.Id}");
-
-                        //add an delete request
-                        _requestCounter++;
-                        var requestId = _requestCounter;
-                        var callId = callObject.Id;
-                        AddRequest(requesterId, callId, Operation.DeleteCall);
+                        if (State.Any(s => s.Value.Id == callToDelete))
+                        {
+                            var stateObject = State.FirstOrDefault(s => s.Value.Id == callToDelete);
+                            var key = stateObject.Key;
+                            State.Remove(key);
+                        }
                     }
                 }
             }
 
             catch (Exception ex)
             {
-                LogCallMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedCallMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -296,7 +347,7 @@ namespace UI
             {
                 _requestCounter++;
 
-                LogRequestMessage($"Adding Request, request Id: {_requestCounter}, requester Id: {requesterId?.ToString() ?? ""}");
+                queuedRequestMessages.Add($"Adding Request, request Id: {_requestCounter}, requester Id: {requesterId?.ToString() ?? ""}");
                 var request = new Request()
                 {
                     RequestId = _requestCounter,
@@ -310,15 +361,12 @@ namespace UI
                 {
                     Requests.Enqueue(request);
                 }
-
-                UpdateUi();
-                BindRequestDataToGrid();
             }
 
 
             catch (Exception ex)
             {
-                LogRequestMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedRequestMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -326,75 +374,59 @@ namespace UI
         {
             try
             {
-                //LogMessage($"Processing next item from queue");
-
+                Request request = null;
                 lock (Requests)
                 {
                     if (Requests.Any())
                     {
-                        var request = Requests.Dequeue();
-                        LogRequestMessage($"Processing next item from queue: {request.RequestId}");
+                        request = Requests.Dequeue();
+                    }
+                }
 
-                        //Now do something with the state
+                if (request == null)
+                {
+                    queuedRequestMessages.Add("Nothing to process, queue is empty");
+                }
+                else
+                {
+                    queuedRequestMessages.Add($"Processing next item from queue: {request.RequestId}");
 
-                        //For UpdateState do a random state change, for delete remove the call
-                        switch (request.Operation)
-                        {
-                            case Operation.UpdateState:
-                                //Generate a random State between 1 and 4
-                                var newState = (State)_randomGenerator.Next(1, 4);
+                    switch (request.Operation)
+                    {
+                        case Operation.UpdateState:
+                            //Generate a random State between 1 and 4
+                            var newState = (State) _randomGenerator.Next(1, 4);
 
+                            //lock (State)
+                            {
                                 if (State.Any(s => s.Value.Id == request.CallId))
                                     State.FirstOrDefault(s => s.Value.Id == request.CallId).Value.State = newState;
-                                break;
+                            }
+                            break;
 
-                            case Operation.AddCall:
-                                AddNewCall(request.Requester);
-                                break;
+                        case Operation.AddCall:
+                            AddNewCall(request.Requester);
+                            break;
 
-                            case Operation.DeleteCall:
-                                if (State.Any(s => s.Value.Id == request.CallId))
-                                { 
-                                    var stateObject = State.FirstOrDefault(s => s.Value.Id == request.CallId);
-                                    var key = stateObject.Key;
-                                    State.Remove(key);
-                                }
+                        case Operation.DeleteCall:
+                            DeleteCall(request.RequestId);
 
-                                break;
+                            break;
 
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-
-                        //if (request.Operation == Operation.UpdateState)
-                        //{
-
-                        //}
-                        //else
-                        //{
-                        //    if (request.Operation == Operation.DeleteCall)
-                        //    {
-                        //    }
-                        //}
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
-                    else
-                    {
-                        LogRequestMessage("Nothing to process, queue is empty");
-                    }
-
-                    if (_stopRequested && !Requests.Any())
-                        _timerProcessRequest.Stop();
                 }
 
 
-                UpdateUi();
-                BindStateDataToGrid();
-                BindRequestDataToGrid();
+                if (_stopRequested)
+                    _timerProcessRequest.Stop();
+                
             }
 
             catch (Exception ex)
             {
-                LogRequestMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedRequestMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -420,7 +452,7 @@ namespace UI
 
             catch (Exception ex)
             {
-                LogCallMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedCallMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -431,13 +463,13 @@ namespace UI
                 AddItemsToState();
                 SetupTimers();
                 //Show data
-                BindStateDataToGrid();
-                UpdateUi();
+                //BindStateDataToGrid();
+                //UpdateLabels();
             }
 
             catch (Exception ex)
             {
-                LogCallMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedCallMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -445,17 +477,14 @@ namespace UI
         {
             try
             {
-                dgRequests.Invoke(new Action(() =>
-                {
-                    dgState.DataSource = null;
-                    dgState.DataSource = State.Values.ToList();
-                    dgState.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-                }));
+                dgState.DataSource = null;
+                dgState.DataSource = State.Values.ToList();
+                dgState.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
             }
 
             catch (Exception ex)
             {
-                LogCallMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedCallMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -463,45 +492,30 @@ namespace UI
         {
             try
             {
-                //lock (Requests)
+                dgRequests.DataSource = null;
+                dgRequests.DataSource = Requests.ToList();
+                dgRequests.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+            }
+
+            catch (Exception ex)
+            {
+                queuedRequestMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
+            }
+        }
+
+        private void LogTimerMessages()
+        {
+            try
+            {
+                foreach (var message in queuedTimerMessages)
                 {
-                    //if (Requests != null && Requests.Any())
-                    {
-                        dgRequests.Invoke(new Action(() =>
-                        {
-                            lock (Requests)
-                            {
-                                if (Requests != null && Requests.Any())
-                                {
-                                    dgRequests.DataSource = null;
-                                    dgRequests.DataSource = Requests.ToList();
-                                    dgRequests.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-                                }
-                            }
-
-
-                        }));
-                    }
+                    txtTimerEvents.Text += $"{message}\r\n";
                 }
-            }
 
-            catch (Exception ex)
-            {
-                LogRequestMessage($"{ex.Message}\r\n{ex.StackTrace}");
-            }
-        }
+                queuedTimerMessages.Clear();
 
-        private void LogTimerMessage(string text)
-        {
-            try
-            {
-                txtTimerEvents.Invoke(new Action(() =>
-                {
-                    Status.Text = text;
-                    txtTimerEvents.Text += $"{text}\r\n";
-                    txtTimerEvents.SelectionStart = txtTimerEvents.TextLength;
-                    txtTimerEvents.ScrollToCaret();
-                }));
+                txtTimerEvents.SelectionStart = txtTimerEvents.TextLength;
+                txtTimerEvents.ScrollToCaret();
             }
 
             catch (Exception ex)
@@ -510,17 +524,18 @@ namespace UI
             }
         }
 
-        private void LogCallMessage(string text)
+        private void LogCallMessages()
         {
             try
             {
-                txtCalls.Invoke(new Action(() =>
+                foreach (var message in queuedCallMessages)
                 {
-                    Status.Text = text;
-                    txtCalls.Text += $"{text}\r\n";
-                    txtCalls.SelectionStart = txtCalls.TextLength;
-                    txtCalls.ScrollToCaret();
-                }));
+                    txtCalls.Text += $"{message}\r\n";
+                }
+                queuedCallMessages.Clear();
+
+                txtCalls.SelectionStart = txtCalls.TextLength;
+                txtCalls.ScrollToCaret();
             }
 
             catch (Exception ex)
@@ -529,17 +544,18 @@ namespace UI
             }
         }
 
-        private void LogRequestMessage(string text)
+        private void LogRequestMessages()
         {
             try
             {
-                txtRequests.Invoke(new Action(() =>
+                foreach (var message in queuedRequestMessages)
                 {
-                    Status.Text = text;
-                    txtRequests.Text += $"{text}\r\n";
-                    txtRequests.SelectionStart = txtRequests.TextLength;
-                    txtRequests.ScrollToCaret();
-                }));
+                    txtRequests.Text += $"{message}\r\n";
+                }
+                queuedRequestMessages.Clear();
+
+                txtRequests.SelectionStart = txtRequests.TextLength;
+                txtRequests.ScrollToCaret();
             }
 
             catch (Exception ex)
@@ -548,33 +564,17 @@ namespace UI
             }
         }
 
-        private void UpdateUi()
+        private void UpdateLabels()
         {
             try
             {
-                //button states
-                //btnStartProcessing.Invoke(new Action(() => { btnStartProcessing.Enabled = Requests.Count > 0; }));
-                //btnStopProcessing.Invoke(new Action(() => { btnStopProcessing.Enabled = Requests.Count > 0; }));
-                //btnClose.Invoke(new Action(() => { btnClose.Enabled = Requests.Count > 0 && _stopRequested; }));
-
-                //totals
-                btnStartProcessing.Invoke(new Action(() =>
-                {
-                    lblTotalCalls.Visible = State.Count > 0;
-                    lblTotalCalls.Text = $"Calls: {State.Count}, Added: {_totalCallsAdded}, Removed: {_totalCallsDeleted}";
-                    //lblTotalCalls.Text = $"Calls: {State.Count}";
-                }));
-
-                btnStartProcessing.Invoke(new Action(() =>
-                {
-                    lblTotalRequests.Visible = Requests.Count > 0;
-                    lblTotalRequests.Text = $"Requests: {Requests.Count}";
-                }));
+                lblTotalCalls.Text = $"Calls: {State.Count}, Added: {_callCounter}, Deleted: {_totalCallsDeleted}";
+                lblTotalRequests.Text = $"Pending Requests: {Requests.Count}, Total: {_requestCounter++}";
             }
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -582,14 +582,14 @@ namespace UI
         {
             try
             {
-                lbl.Invoke(new Action(() =>
-                {
-                    lbl.Enabled = isEnbaled;
-                }));
+                //lbl.Invoke(new Action(() =>
+                //{
+                //    lbl.Enabled = isEnbaled;
+                //}));
             }
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -598,7 +598,7 @@ namespace UI
         {
             try
             {
-                LogTimerMessage("Processing Started");
+                queuedTimerMessages.Add("Processing Started");
                 SetupTimers();
                 _stopRequested = false;
                 //btnClose.Enabled = false;
@@ -607,7 +607,7 @@ namespace UI
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -615,7 +615,7 @@ namespace UI
         {
             try
             {
-                LogTimerMessage("Finishing processing, cleaning up queue...");
+                queuedTimerMessages.Add("Finishing processing, cleaning up queue...");
 
                 _stopRequested = true;
                 StopRequests();
@@ -626,7 +626,7 @@ namespace UI
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -640,7 +640,7 @@ namespace UI
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
@@ -654,7 +654,7 @@ namespace UI
 
             catch (Exception ex)
             {
-                LogTimerMessage($"{ex.Message}\r\n{ex.StackTrace}");
+                queuedTimerMessages.Add($"{ex.Message}\r\n{ex.StackTrace}");
             }
         }
 
